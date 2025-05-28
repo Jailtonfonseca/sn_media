@@ -1,0 +1,103 @@
+/* TODO: CSS styles will go here */
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        header { background-color: #333; color: #fff; padding: 1em 0; text-align: center; }
+        main { padding: 1em; }
+        footer { text-align: center; padding: 1em 0; background-color: #333; color: #fff; position: fixed; bottom: 0; width: 100%; }
+        section { background-color: #fff; margin-bottom: 1em; padding: 1em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        button { background-color: #5cb85c; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #4cae4c; }
+        input[type="text"], input[type="url"], input[type="number"], select { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+     nav {
+         background-color: #444;
+         padding: 0.5em;
+         text-align: center;
+         margin-bottom: 1em;
+     }
+     nav button {
+         background-color: #555;
+         color: white;
+         border: none;
+         padding: 10px 15px;
+         margin: 0 5px;
+         cursor: pointer;
+         border-radius: 4px;
+     }
+     nav button:hover {
+         background-color: #666;
+     }
+
+    /* New section visibility rules */
+    main section {
+        display: none; /* Sections are hidden by default */
+    }
+    .active-section {
+        display: block !important; /* Ensures the active section is shown */
+    }
+    .hidden-section {
+        display: none; /* Explicitly hide a section */
+    }
+
+    #videoMetadataDisplay { border: 1px solid #ccc; }
+    #videoMetadataDisplay h4 { margin-top: 0; }
+    #chaptersList li { cursor: pointer; text-decoration: underline; color: blue; margin-bottom: 5px; }
+    #chaptersList li:hover { color: darkblue; }
+
+    /* Styles for Generated Clips Section */
+    .clip-card {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .clip-card h3 {
+        margin-top: 0;
+    }
+    .clip-card video {
+        max-width: 100%; /* Ensure video is responsive within card */
+        height: auto;   /* Maintain aspect ratio */
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    .button-like { /* For the download link */
+        display: inline-block;
+        background-color: #007bff;
+        color: white !important; /* Ensure text is white */
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 5px;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+    .button-like:hover {
+        background-color: #0056b3;
+        color: white !important;
+    }
+    /* Minor style for form elements within clip card for better spacing */
+    .clip-card label { margin-right: 5px; }
+    .clip-card input[type="number"] { width: 70px; margin-right:10px; }
+    .clip-card input[type="checkbox"] { margin-right: 5px; }
+    .clip-card h4 { margin-bottom: 5px; margin-top: 15px; }
+
+    #metricsTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    #metricsTable th, #metricsTable td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    #metricsTable th {
+        background-color: #f2f2f2;
+    }
+    #metricsTable tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    #metricsTable td a { margin-right: 5px; }
