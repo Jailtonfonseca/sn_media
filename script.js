@@ -62,7 +62,7 @@ const STORAGE_KEYS = {
             document.getElementById('defaultDuration').value = settings.defaultDuration || 30;
             document.getElementById('outputFormat').value = settings.outputFormat || '9:16';
             document.getElementById('addFade').checked = typeof settings.addFade === 'boolean' ? settings.addFade : true;
-            
+
             const audioOptionElement = document.querySelector(`input[name="audioOption"][value="${settings.audioOption || 'keep'}"]`);
             if (audioOptionElement) {
                 audioOptionElement.checked = true;
@@ -89,7 +89,7 @@ const STORAGE_KEYS = {
     const ffmpegLogEl = document.getElementById('ffmpegLog'); // Renamed to avoid conflict with function name
     const loadFFmpegButton = document.getElementById('loadFFmpegButton');
     // --- End: Variables related to FFmpeg ---
-    
+
     const videoUpload = document.getElementById('videoUpload');
     const videoPlayer = document.getElementById('videoPlayer');
     const videoPreviewContainer = document.getElementById('videoPreviewContainer');
@@ -131,7 +131,7 @@ const STORAGE_KEYS = {
             videoPlayer.src = fileURL;
             videoPreviewContainer.style.display = 'block';
             console.log('Video file selected:', uploadedFile.name);
-            
+
             if (!ffmpegLoaded) {
                 ffmpegLogEl.textContent = 'Vídeo carregado. Clique em "Carregar FFmpeg" se ainda não o fez.';
             }
@@ -148,7 +148,7 @@ const STORAGE_KEYS = {
         const videoTitleEl = document.getElementById('videoTitle'); // Renamed to avoid conflict
         const videoDescriptionEl = document.getElementById('videoDescription'); // Renamed to avoid conflict
         const chaptersListEl = document.getElementById('chaptersList'); // Renamed to avoid conflict
-        
+
         videoTitleEl.textContent = '-';
         videoDescriptionEl.textContent = '-';
         chaptersListEl.innerHTML = ''; // Clear previous chapters
@@ -182,7 +182,7 @@ const STORAGE_KEYS = {
             videoMetadataDisplay.style.display = 'none';
             return;
         }
-        
+
         videoMetadataDisplay.style.display = 'block';
         videoTitleEl.textContent = 'Buscando...';
         videoDescriptionEl.textContent = 'Buscando...';
@@ -202,7 +202,7 @@ const STORAGE_KEYS = {
                 const item = data.items[0];
                 videoTitleEl.textContent = item.snippet.title || 'Não encontrado';
                 videoDescriptionEl.textContent = item.snippet.description.substring(0, 300) + '...' || 'Não encontrada';
-                
+
                 const foundChapters = parseChaptersFromDescription(item.snippet.description);
                 if (foundChapters.length > 0) {
                     chaptersListEl.innerHTML = ''; // Clear "Buscando..."
@@ -213,17 +213,17 @@ const STORAGE_KEYS = {
                         li.title = `Clique para usar este capítulo como base para um segmento. Início: ${chapter.time}.`;
                         // li.style.cursor = 'pointer'; // Already in CSS
                         li.onclick = () => {
-                            segmentStartTimeInput.value = chapter.time; 
+                            segmentStartTimeInput.value = chapter.time;
                             const nextChapterIndex = foundChapters.indexOf(chapter) + 1;
                             if (nextChapterIndex < foundChapters.length) {
                                 segmentEndTimeInput.value = foundChapters[nextChapterIndex].time;
                             } else if (videoPlayer.duration && !isNaN(videoPlayer.duration)) {
                                  segmentEndTimeInput.value = secondsToTime(videoPlayer.duration); // secondsToTime defined later
                             } else {
-                                segmentEndTimeInput.value = ''; 
+                                segmentEndTimeInput.value = '';
                             }
                             segmentTitleInput.value = chapter.title;
-                            segmentStartTimeInput.focus(); 
+                            segmentStartTimeInput.focus();
                             console.log('Chapter clicked to populate segment fields:', chapter);
                             // Clear any previous error messages from manual segment addition
                             if(typeof segmentErrorDisplay !== 'undefined') segmentErrorDisplay.textContent = '';
@@ -245,7 +245,7 @@ const STORAGE_KEYS = {
             videoTitleEl.textContent = 'Erro ao buscar.';
             videoDescriptionEl.textContent = error.message;
             chaptersListEl.innerHTML = '<li>Erro ao buscar capítulos.</li>';
-            videoMetadataDisplay.style.display = 'block'; 
+            videoMetadataDisplay.style.display = 'block';
         }
     }
 
@@ -261,8 +261,8 @@ const STORAGE_KEYS = {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        showSection('warnings'); 
-        loadSettings(); 
+        showSection('warnings');
+        loadSettings();
         // Initialize variables that depend on DOM elements being present
         // Note: ffmpegLogEl, loadFFmpegButton, videoUpload, videoPlayer, videoPreviewContainer are already initialized globally
         // as they are obtained by getElementById. This is fine.
@@ -341,7 +341,7 @@ const STORAGE_KEYS = {
             segmentErrorDisplay.textContent = `O tempo de fim (${secondsToTime(endTime)}) excede a duração do vídeo (${secondsToTime(videoPlayer.duration)}).`;
             return;
         }
-        
+
         addSegmentToQueue(startTime, endTime, title, 'manual');
         segmentStartTimeInput.value = '';
         segmentEndTimeInput.value = '';
@@ -374,7 +374,7 @@ const STORAGE_KEYS = {
             startProcessingButton.style.display = 'none';
             return;
         }
-        
+
         queueStatusMessage.textContent = '';
         segmentsToCut.forEach(segment => {
             const li = document.createElement('li');
@@ -390,7 +390,7 @@ const STORAGE_KEYS = {
         startProcessingButton.disabled = false; // Ensure it's enabled if there are items
     }
     // --- End: Segment Management Functions ---
-    
+
     // (Keep existing variables: ffmpeg, ffmpegLoaded, uploadedFile, segmentsToCut, etc.)
     // (Keep existing time conversion utilities)
 
@@ -398,7 +398,7 @@ const STORAGE_KEYS = {
     let processedClips = []; // Array to store { id, title, blob, originalSegment, downloadUrl }
     let nextProcessedClipId = 0;
     // --- End: Processed Clips Management ---
-    
+
     // --- Start: FFmpeg Progress Handling ---
     // The ffmpegProgressDisplay element is created and added to DOM in DOMContentLoaded
     // The progress listener is attached in the updated loadFFmpeg function.
@@ -427,13 +427,13 @@ const STORAGE_KEYS = {
         try {
             ffmpegLogEl.textContent = `Preparando para processar: ${segment.title}`;
             if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = 'Escrevendo arquivo de entrada para FFmpeg FS...';
-            
+
             ffmpeg.FS('writeFile', inputFileName, await fetchFile(uploadedFile));
             if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = 'Arquivo de entrada escrito.';
 
             // Base command
             command.push('-ss', String(segment.startTimeSeconds));
-            command.push('-to', String(segment.endTimeSeconds)); 
+            command.push('-to', String(segment.endTimeSeconds));
             command.push('-i', inputFileName);
 
             // Video Filters
@@ -457,15 +457,15 @@ const STORAGE_KEYS = {
                     // No scaling/padding
                     break;
             }
-            
+
             if (vfComplex.length > 0) {
                 command.push('-vf', vfComplex.join(','));
             }
 
             if (audioOption === 'remove') {
-                command.push('-an'); 
-            } else { 
-                command.push('-c:a', 'aac', '-b:a', '128k'); 
+                command.push('-an');
+            } else {
+                command.push('-c:a', 'aac', '-b:a', '128k');
             }
 
             command.push('-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-movflags', '+faststart');
@@ -476,14 +476,14 @@ const STORAGE_KEYS = {
             if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = 'Progresso do FFmpeg: 0%';
 
             await ffmpeg.run(...command);
-            
+
             if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = 'Leitura do arquivo de saída...';
             const data = ffmpeg.FS('readFile', outputFileName);
-            
+
             if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = 'Limpando arquivos do FFmpeg FS...';
             ffmpeg.FS('unlink', inputFileName);
             ffmpeg.FS('unlink', outputFileName);
-            if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = ''; 
+            if(ffmpegProgressDisplay) ffmpegProgressDisplay.textContent = '';
 
             return new Blob([data.buffer], { type: 'video/mp4' });
 
@@ -495,7 +495,7 @@ const STORAGE_KEYS = {
                 ffmpeg.FS('unlink', inputFileName); // Attempt cleanup
                 ffmpeg.FS('unlink', outputFileName); // Attempt cleanup
             } catch (e) { /* ignore cleanup errors */ }
-            throw error; 
+            throw error;
         }
     }
 
@@ -523,7 +523,7 @@ const STORAGE_KEYS = {
         for (let i = 0; i < segmentsToProcess.length; i++) {
             const segment = segmentsToProcess[i];
             segment.status = 'Processando';
-            renderCuttingQueue(); 
+            renderCuttingQueue();
             queueStatusMessage.textContent = `Processando clipe ${i + 1} de ${segmentsToProcess.length}: "${segment.title}"...`;
 
             try {
@@ -537,24 +537,25 @@ const STORAGE_KEYS = {
                     blob: videoBlob,
                     originalSegmentId: segment.id,
                     timestamp: new Date().toISOString(),
-                    downloadUrl: URL.createObjectURL(videoBlob), 
+                    downloadUrl: URL.createObjectURL(videoBlob),
                     platformsPosted: [],
-                    metrics: { views: 0, likes: 0, comments: 0 }
+                    metrics: { views: 0, likes: 0, comments: 0 },
+                    postingNotes: "" // Initialize postingNotes
                 };
                 processedClips.push(newClip);
                 console.log("Clip processed and added:", newClip.title, newClip.downloadUrl);
-                
+
             } catch (error) {
                 segment.status = 'Erro';
                 console.error(`Falha ao processar segmento ${segment.id}: ${segment.title}`, error);
                 queueStatusMessage.textContent = `Erro ao processar "${segment.title}". Verifique o console.`;
             }
-            renderCuttingQueue(); 
+            renderCuttingQueue();
         }
 
         queueStatusMessage.textContent = "Processamento da fila concluído.";
         startProcessingButton.disabled = false;
-        
+
         if (processedClips.length > 0 && segmentsToProcess.some(s => s.status === 'Concluído')) {
             alert("Processamento concluído! Verifique a seção 'Clipes Gerados'.");
             showSection('generatedClips');
@@ -568,13 +569,13 @@ const STORAGE_KEYS = {
     // --- End: FFmpeg Core Logic ---
 
     // --- Start: Update loadFFmpeg to attach progress listener ---
-    async function loadFFmpeg() { 
+    async function loadFFmpeg() {
         if (ffmpegLoaded && ffmpeg) {
             ffmpegLogEl.textContent = 'FFmpeg já está carregado.';
             if(loadFFmpegButton) loadFFmpegButton.style.display = 'none';
             return;
         }
-        if (!ffmpeg) { 
+        if (!ffmpeg) {
              ffmpeg = createFFmpeg({
                 log: true,
                 corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
@@ -593,7 +594,7 @@ const STORAGE_KEYS = {
                 }
             }
         });
-        
+
         ffmpegLogEl.textContent = 'Carregando FFmpeg-core.js... (pode levar alguns instantes)';
         if(loadFFmpegButton) loadFFmpegButton.disabled = true;
         try {
@@ -607,19 +608,19 @@ const STORAGE_KEYS = {
             console.error('FFmpeg loading error:', error);
             if(loadFFmpegButton) loadFFmpegButton.disabled = false;
             ffmpegLoaded = false;
-            ffmpeg = null; 
+            ffmpeg = null;
         }
     }
     // --- End: Update loadFFmpeg ---
 
     // --- Start: DOMContentLoaded adjustments ---
     document.addEventListener('DOMContentLoaded', () => {
-        showSection('warnings'); 
-        loadSettings(); 
-        renderCuttingQueue(); 
+        showSection('warnings');
+        loadSettings();
+        renderCuttingQueue();
 
         const ffmpegStatusDiv = document.getElementById('ffmpegStatus');
-        if (ffmpegStatusDiv && !document.getElementById('ffmpegProgressDisplay')) { 
+        if (ffmpegStatusDiv && !document.getElementById('ffmpegProgressDisplay')) {
             const progressDisplayElement = document.createElement('div');
             progressDisplayElement.id = 'ffmpegProgressDisplay';
             progressDisplayElement.style.marginTop = '10px';
@@ -651,6 +652,7 @@ const STORAGE_KEYS = {
                 platformsPosted: sessionClip.platformsPosted || [],
                 postLinks: sessionClip.postLinks || {},
                 metrics: sessionClip.metrics || { views: 0, likes: 0, comments: 0 },
+                postingNotes: sessionClip.postingNotes || "", // Add postingNotes
                 startTimeSeconds: segmentsToCut.find(s => s.id === sessionClip.originalSegmentId)?.startTimeSeconds,
                 endTimeSeconds: segmentsToCut.find(s => s.id === sessionClip.originalSegmentId)?.endTimeSeconds,
             };
@@ -676,10 +678,10 @@ const STORAGE_KEYS = {
             console.error("Clip card not found in DOM for clipId:", clipId);
             return;
         }
-        
+
         const platforms = Array.from(card.querySelectorAll('input[name^="platform_"]:checked')).map(cb => cb.value);
         clip.platformsPosted = platforms;
-        
+
         clip.postLinks = clip.postLinks || {};
         platforms.forEach(platform => {
             const linkInput = card.querySelector(`input[name="link_${platform}_${clipId}"]`);
@@ -692,6 +694,9 @@ const STORAGE_KEYS = {
             comments: parseInt(card.querySelector(`input[name="comments_${clipId}"]`).value, 10) || 0,
         };
 
+        const postingNotes = card.querySelector(`textarea[name="notes_${clipId}"]`).value.trim();
+        clip.postingNotes = postingNotes;
+
         let allMetadata = getSavedClipsMetadata();
         const existingIndex = allMetadata.findIndex(m => m.id === clipId);
         const metadataToSave = {
@@ -703,6 +708,7 @@ const STORAGE_KEYS = {
             platformsPosted: clip.platformsPosted,
             postLinks: clip.postLinks,
             metrics: clip.metrics,
+            postingNotes: clip.postingNotes, // Save postingNotes
             startTimeSeconds: segmentsToCut.find(s => s.id === clip.originalSegmentId)?.startTimeSeconds,
             endTimeSeconds: segmentsToCut.find(s => s.id === clip.originalSegmentId)?.endTimeSeconds,
         };
@@ -713,15 +719,22 @@ const STORAGE_KEYS = {
             allMetadata.push(metadataToSave);
         }
         localStorage.setItem(STORAGE_KEYS.savedClipMetrics, JSON.stringify(allMetadata));
-        
+
         alert(`Informações do clipe "${clip.title}" salvas!`);
         console.log("Clip info saved to localStorage:", metadataToSave);
-        
+
         if (typeof renderMetricsAnalysis === "function") {
             renderMetricsAnalysis();
         }
+
+        // Check if the generatedClips section is currently active and re-render it
+        const generatedClipsSection = document.getElementById('generatedClips');
+        // Check class instead of style.display as styles are class-driven now
+        if (generatedClipsSection && generatedClipsSection.classList.contains('active-section')) {
+            renderGeneratedClips();
+        }
     }
-    
+
     function removeClipFromSessionAndStorage(clipId) {
         const sessionIndex = processedClips.findIndex(c => c.id === clipId);
         if (sessionIndex > -1) {
@@ -736,7 +749,7 @@ const STORAGE_KEYS = {
         localStorage.setItem(STORAGE_KEYS.savedClipMetrics, JSON.stringify(allMetadata));
 
         alert('Clipe removido da sessão e do histórico.');
-        renderGeneratedClips(); 
+        renderGeneratedClips();
         if (typeof renderMetricsAnalysis === "function") {
             renderMetricsAnalysis();
         }
@@ -747,7 +760,7 @@ const STORAGE_KEYS = {
             console.error("clipsGallery element not found in DOM.");
             return;
         }
-        clipsGallery.innerHTML = ''; 
+        clipsGallery.innerHTML = '';
         if (processedClips.length === 0) {
             clipsGallery.innerHTML = '<p>Nenhum clipe foi gerado ou processado nesta sessão ainda. Vá para "Processamento de Vídeo" para criar clipes.</p>';
             return;
@@ -764,12 +777,20 @@ const STORAGE_KEYS = {
         processedClips.forEach(clip => {
             const clipCard = document.createElement('div');
             clipCard.id = `clipCard_${clip.id}`;
-            clipCard.className = 'clip-card'; 
+            clipCard.className = 'clip-card';
 
             const savedMetadata = (getSavedClipsMetadata()).find(m => m.id === clip.id);
             const displayMetrics = savedMetadata ? savedMetadata.metrics : (clip.metrics || { views: 0, likes: 0, comments: 0 });
             const displayPlatforms = savedMetadata ? savedMetadata.platformsPosted : (clip.platformsPosted || []);
             const displayPostLinks = savedMetadata ? savedMetadata.postLinks : (clip.postLinks || {});
+            const displayPostingNotes = savedMetadata ? (savedMetadata.postingNotes || "") : (clip.postingNotes || "");
+
+            // Apply posted style if any platform is checked
+            if (displayPlatforms.length > 0) {
+                clipCard.classList.add('clip-card-posted');
+            } else {
+                clipCard.classList.remove('clip-card-posted'); // Ensure it's removed if no platforms
+            }
 
             let platformsHTML = '<h4>Plataformas Postadas:</h4>';
             platformOptions.forEach(opt => {
@@ -782,9 +803,12 @@ const STORAGE_KEYS = {
                         <input type="url" name="link_${opt.value}_${clip.id}" placeholder="Link da postagem em ${opt.label}" value="${linkValue}" style="width: 50%; margin-left: 10px; ${isChecked ? 'display:inline-block;' : 'display:none;'}">
                     </div>`;
             });
-            
+
             clipCard.innerHTML = `
-                <h3>${clip.title}</h3>
+                <div>
+                    <h3 style="display: inline;">${clip.title}</h3>
+                    <button type="button" class="copy-title-btn" onclick="copyClipTitle('${clip.id}', this)">Copy Title</button>
+                </div>
                 <video src="${clip.downloadUrl}" controls width="320" style="max-width:100%; height:auto;"></video>
                 <br>
                 <a href="${clip.downloadUrl}" download="${clip.title.replace(/[^a-z0-9_\-]/gi, '_')}.mp4" class="button-like">Baixar Clipe</a>
@@ -799,6 +823,8 @@ const STORAGE_KEYS = {
                     <label for="comments_${clip.id}" style="margin-left:10px;">Comentários:</label>
                     <input type="number" id="comments_${clip.id}" name="comments_${clip.id}" value="${displayMetrics.comments}" min="0">
                 </div>
+                <h4 style="margin-top:15px;">Notas para Postagem:</h4>
+                <textarea id="notes_${clip.id}" name="notes_${clip.id}" rows="3" style="width: 95%; padding: 5px;" placeholder="Lembretes para esta postagem (hashtags, @menções, ideias)...">${displayPostingNotes}</textarea>
                 <button type="button" onclick="saveClipInfoToStorage('${clip.id}')" style="margin-top:10px;">Salvar Informações do Clipe</button>
                 <button type="button" onclick="removeClipFromSessionAndStorage('${clip.id}')" style="margin-top:10px; background-color:#d9534f; color:white; border:none; padding: 8px 12px; border-radius:4px; cursor:pointer;">Remover Clipe (da Sessão e Histórico)</button>
             `;
@@ -819,9 +845,9 @@ const STORAGE_KEYS = {
     // Modify showSection (ensure it's defined globally or passed around)
     // Assuming originalShowSection was defined earlier or showSection is global
     if (typeof window.showSection === 'function') {
-        const originalShowSectionFunc = window.showSection; 
+        const originalShowSectionFunc = window.showSection;
         window.showSection = function(sectionId) {
-            originalShowSectionFunc(sectionId); 
+            originalShowSectionFunc(sectionId);
             if (sectionId === 'generatedClips') {
                 renderGeneratedClips();
             }
@@ -856,9 +882,9 @@ const STORAGE_KEYS = {
     function renderMetricsAnalysis() {
         const savedClips = getSavedClipsMetadata();
         const metricsTable = document.getElementById('metricsTable'); // Get here for local scope use
-        
-        if(metricsTableBody) metricsTableBody.innerHTML = ''; 
-        if(insightsList) insightsList.innerHTML = ''; 
+
+        if(metricsTableBody) metricsTableBody.innerHTML = '';
+        if(insightsList) insightsList.innerHTML = '';
 
         if (!savedClips || savedClips.length === 0) {
             if(noMetricsDataP) noMetricsDataP.style.display = 'block';
@@ -874,7 +900,7 @@ const STORAGE_KEYS = {
         let totalViewsAll = 0;
         let totalLikesAll = 0;
         let totalCommentsAll = 0;
-        const platformPerformance = {}; 
+        const platformPerformance = {};
         const durationCategories = {
             "0-15s": { views: 0, likes: 0, comments: 0, count: 0, totalDuration: 0 },
             "16-30s": { views: 0, likes: 0, comments: 0, count: 0, totalDuration: 0 },
@@ -887,7 +913,7 @@ const STORAGE_KEYS = {
             const metrics = clip.metrics || { views: 0, likes: 0, comments: 0 };
             const engagement = calculateEngagementRate(metrics.views, metrics.likes, metrics.comments);
             const duration = (clip.endTimeSeconds !== undefined && clip.startTimeSeconds !== undefined) ? (clip.endTimeSeconds - clip.startTimeSeconds) : NaN;
-            
+
             let linksHTML = '';
             if(clip.postLinks) {
                 for (const [platform, link] of Object.entries(clip.postLinks)) {
@@ -927,7 +953,7 @@ const STORAGE_KEYS = {
                 else if (duration <= 30) category = "16-30s";
                 else if (duration <= 45) category = "31-45s";
                 else if (duration <= 60) category = "46-60s";
-                
+
                 durationCategories[category].views += metrics.views;
                 durationCategories[category].likes += metrics.likes;
                 durationCategories[category].comments += metrics.comments;
@@ -947,7 +973,7 @@ const STORAGE_KEYS = {
                 insightsList.innerHTML += `<li>Plataforma ${platform}: ${data.count} clipe(s), média de ${Math.round(data.views / data.count)} views, engajamento de ${engagement.toFixed(2)}%.</li>`;
             }
         }
-        
+
         let bestDurationCategory = null;
         let maxAvgViewsDuration = -1;
 
@@ -966,7 +992,7 @@ const STORAGE_KEYS = {
         if (bestDurationCategory) {
              insightsList.innerHTML += `<li><strong>Sugestão:</strong> Clipes na faixa de duração "${bestDurationCategory}" tiveram a maior média de visualizações (${maxAvgViewsDuration.toFixed(0)} views).</li>`;
         }
-        
+
         if(insightsList.innerHTML === '<li>Nenhum dado para gerar insights.</li>' && savedClips.length > 0){
             insightsList.innerHTML = '<li>Dados insuficientes ou muito uniformes para gerar insights comparativos detalhados. Continue postando e registrando!</li>';
         } else if (savedClips.length > 0 && insightsList.childNodes.length === 0) {
@@ -996,6 +1022,46 @@ const STORAGE_KEYS = {
     }
     // --- End: Metrics Analysis Section Logic ---
 
+// --- Start: Copy Clip Title Logic ---
+function copyClipTitle(clipId, buttonElement) {
+    const clip = processedClips.find(c => c.id === clipId);
+    if (!clip || !clip.title) {
+        console.error('Clip or title not found for ID:', clipId);
+        buttonElement.textContent = 'Error!';
+        setTimeout(() => {
+            buttonElement.textContent = 'Copy Title';
+        }, 2000);
+        return;
+    }
+    const titleToCopy = clip.title;
+
+    if (!navigator.clipboard) {
+        console.error('Clipboard API not available.');
+        buttonElement.textContent = 'No API!'; // Indicate clipboard API is not available
+         setTimeout(() => {
+            buttonElement.textContent = 'Copy Title';
+        }, 2000);
+        return;
+    }
+
+    navigator.clipboard.writeText(titleToCopy).then(() => {
+        const originalButtonText = 'Copy Title'; // Assuming this is the default
+        buttonElement.textContent = 'Copied!';
+        buttonElement.disabled = true;
+        setTimeout(() => {
+            buttonElement.textContent = originalButtonText;
+            buttonElement.disabled = false;
+        }, 2000); // Revert after 2 seconds
+    }).catch(err => {
+        console.error('Failed to copy title: ', err);
+        const originalButtonText = 'Copy Title';
+        buttonElement.textContent = 'Failed!';
+        setTimeout(() => {
+            buttonElement.textContent = originalButtonText;
+        }, 2000);
+    });
+}
+// --- End: Copy Clip Title Logic ---
 // --- Start: Import/Export Logic ---
 function exportAllData() {
     const statusP = document.getElementById('importExportStatus');
@@ -1069,7 +1135,7 @@ function processImportedData(jsonDataString) {
     }
 
     // Validate data structure
-    if (!importedData || 
+    if (!importedData ||
         importedData[STORAGE_KEYS.settings] === undefined ||
         importedData[STORAGE_KEYS.savedClipMetrics] === undefined ||
         importedData[STORAGE_KEYS.userNotes] === undefined) {
@@ -1083,7 +1149,7 @@ function processImportedData(jsonDataString) {
     if (importedData[STORAGE_KEYS.settings]) {
         localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(importedData[STORAGE_KEYS.settings]));
     } else {
-        localStorage.removeItem(STORAGE_KEYS.settings); 
+        localStorage.removeItem(STORAGE_KEYS.settings);
     }
 
     if (importedData[STORAGE_KEYS.savedClipMetrics]) {
@@ -1117,11 +1183,11 @@ function processImportedData(jsonDataString) {
         });
 
     } else {
-        localStorage.setItem(STORAGE_KEYS.savedClipMetrics, JSON.stringify([])); 
+        localStorage.setItem(STORAGE_KEYS.savedClipMetrics, JSON.stringify([]));
         processedClips = []; // Reset in-memory array too
     }
 
-    if (importedData[STORAGE_KEYS.userNotes] !== undefined) { 
+    if (importedData[STORAGE_KEYS.userNotes] !== undefined) {
         localStorage.setItem(STORAGE_KEYS.userNotes, importedData[STORAGE_KEYS.userNotes]);
     } else {
         localStorage.removeItem(STORAGE_KEYS.userNotes);
@@ -1135,9 +1201,9 @@ function processImportedData(jsonDataString) {
     loadUserNotes(); // This function updates the textarea
     renderGeneratedClips(); // Will now use the repopulated processedClips
     renderMetricsAnalysis();
-    
+
     // Show the settings section to confirm changes
-    showSection('settings'); 
+    showSection('settings');
 
     document.getElementById('importFile').value = ''; // Clear the file input
 

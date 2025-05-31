@@ -55,6 +55,7 @@
     }
     .clip-card h3 {
         margin-top: 0;
+        display: inline; /* To allow button next to it */
     }
     .clip-card video {
         max-width: 100%; /* Ensure video is responsive within card */
@@ -84,6 +85,26 @@
     .clip-card input[type="checkbox"] { margin-right: 5px; }
     .clip-card h4 { margin-bottom: 5px; margin-top: 15px; }
 
+    .copy-title-btn {
+        margin-left: 10px;
+        padding: 3px 8px;
+        font-size: 0.8em;
+        background-color: #eee;
+        color: #333; /* Default button text color */
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .copy-title-btn:hover {
+        background-color: #ddd;
+    }
+
+    .clip-card-posted {
+        border-left: 5px solid #28a745; /* A distinct green color */
+        background-color: #f0fff0; /* Slightly different background: Honeydew */
+    }
+
+
     #metricsTable {
         width: 100%;
         border-collapse: collapse;
@@ -101,3 +122,5 @@
         background-color: #f9f9f9;
     }
     #metricsTable td a { margin-right: 5px; }
+
+[end of style.css]

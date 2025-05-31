@@ -21,7 +21,11 @@ The project consists of the following main files:
     -   Define default clip duration.
     -   Choose preferred output format.
     -   Toggle fade effects and audio removal.
--   **Clip Metadata Storage:** Save information about generated clips, including platforms posted to, links, and basic performance metrics (views, likes, comments).
+-   **Clip Metadata Storage & Management (in "Generated Clips" section):**
+    -   Save information about generated clips, including platforms posted to, links, and basic performance metrics (views, likes, comments).
+    -   **Posting Notes:** Each clip card includes a "Notas para Postagem" textarea for users to jot down platform-specific ideas, hashtags, or reminders for when they manually post the clip.
+    -   **Copy Title Button:** A button next to each clip's title allows for quick copying of the title to the clipboard.
+    -   **Posted Clip Indicator:** Clips that have been marked as posted to at least one platform will have a distinct visual style (a green left border and slightly different background) to make them easily identifiable.
 -   **Metrics Analysis:** Basic dashboard to view saved clip metrics and simple insights.
 -   **User Notes:** A section to keep personal notes on content performance.
 -   **Data Management (Export/Import):**
@@ -45,6 +49,7 @@ The project consists of the following main files:
 4.  **Generated Clips:**
     *   Navigate to the "Clipes Gerados" (Generated Clips) section.
     *   Here you can preview generated clips, download them, and log where you've posted them along with performance metrics.
+    *   You can also use the "Copy Title" button for convenience, add platform-specific "Notas para Postagem" (Posting Notes) for your reference, and visually identify clips you've marked as posted due to their distinct styling.
 5.  **Metrics Analysis:**
     *   Visit the "Análise de Métricas" (Metrics Analysis) section to see a summary of your saved clip data and any insights generated.
 6.  **Data Management (Export/Import):**
