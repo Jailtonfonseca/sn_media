@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pydantic-settings
+celery
+librabbitmq
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+yt-dlp
+google-api-python-client
+google-auth-oauthlib
+pytest
+pytest-cov
+httpx # Para testes de API e cliente HTTP geral
+# unittest.mock é parte da stdlib do Python 3.3+
