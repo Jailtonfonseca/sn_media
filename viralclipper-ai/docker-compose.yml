@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app # Monta o código da app para hot-reloading
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+      - rabbitmq
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes: # Adicionado media_data volume mount
+      - ./backend/app:/app/app # Monta o código da app para hot-reloading
+      - media_data:/app/media # Volume para arquivos baixados
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: viralclipperdb
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    ports:
+      - "5672:5672"  # Porta do AMQP
+      - "15672:15672" # Porta da UI de Gerenciamento
+    environment:
+      RABBITMQ_DEFAULT_USER: user # Opcional, pode usar guest/guest para dev
+      RABBITMQ_DEFAULT_PASS: password
+
+  # celery_worker: # Será adicionado/configurado melhor quando as tasks forem definidas
+  #   build: ./backend
+  #   command: celery -A app.workers.tasks worker -l info
+  #   volumes:
+  #     - ./backend/app:/app/app
+  #   env_file:
+  #     - ./backend/.env
+  #   depends_on:
+  #     - rabbitmq
+  #     - backend # Para que o código da app esteja disponível
+  celery_worker: # Descomentado e ajustado
+    build: ./backend
+    command: celery -A app.workers.tasks.celery_app worker -l info -P solo # Usar -P solo para debug inicial, depois gevent/eventlet
+    volumes:
+      - ./backend/app:/app/app # Código da app
+      - media_data:/app/media # Volume para arquivos baixados
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - rabbitmq
+      - db
+
+volumes:
+  postgres_data:
+  media_data: # Definir o volume
