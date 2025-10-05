@@ -72,17 +72,18 @@ class TestYouTubeAnalyzerService:
         assert peaks[0] == (25, 50)
 
     def test_detect_retention_peaks_multiple_peaks(self, analyzer):
-        # Média (2*20 + 3*80 + 2*20 + 3*90) / 10 = (40 + 240 + 40 + 270) / 10 = 590 / 10 = 59
+        # This test ensures that two distinct peaks with enough separation are not merged.
+        # The merge distance is 15s by default. The gap here is 20s (45 - 25).
         data = [
-            (0, 20.0), (5, 20.0),                 # Abaixo da média
-            (10, 80.0), (15, 80.0), (20, 80.0),   # Pico 1 (10 a 20+5=25)
-            (25, 20.0), (30, 20.0),               # Abaixo da média
-            (35, 90.0), (40, 90.0), (45, 90.0)    # Pico 2 (35 a 45+5=50)
+            (0, 20.0), (5, 20.0),                  # Low retention
+            (10, 80.0), (15, 80.0), (20, 80.0),    # Peak 1 (ends at 25s)
+            (25, 20.0), (30, 20.0), (35, 20.0), (40, 20.0), # Valley between peaks
+            (45, 90.0), (50, 90.0), (55, 90.0)     # Peak 2 (starts at 45s, ends at 60s)
         ]
         peaks = analyzer.detect_retention_peaks(data)
         assert len(peaks) == 2
         assert peaks[0] == (10, 25)
-        assert peaks[1] == (35, 50)
+        assert peaks[1] == (45, 60)
 
     def test_get_mock_audience_retention_duration(self):
         # Testar a função utilitária diretamente

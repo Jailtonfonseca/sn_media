@@ -3,8 +3,7 @@ uvicorn[standard]
 sqlalchemy
 psycopg2-binary
 pydantic-settings
-celery
-librabbitmq
+celery[py-amqp]
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]
