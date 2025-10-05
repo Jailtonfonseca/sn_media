@@ -4,7 +4,8 @@ from typing import List # Adicionar List
 from app.db import models, database
 from app.schemas import projects as project_schemas
 from app.core import security
-from app.workers.tasks import download_youtube_video_task
+from celery import chain
+from app.workers.tasks import download_youtube_video_task, analyze_retention_task
 
 router = APIRouter()
 
@@ -32,7 +33,14 @@ def create_project(
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
-    download_youtube_video_task.delay(db_project.id, str(db_project.youtube_url))
+
+    # Create a Celery chain to ensure tasks run sequentially
+    processing_chain = chain(
+        download_youtube_video_task.s(db_project.id, str(db_project.youtube_url)),
+        analyze_retention_task.s()
+    )
+    processing_chain.apply_async()
+
     return db_project
 
 # NOVO: GET /api/v1/projects/ - Listar todos os projetos do usuário
