@@ -1,100 +1,98 @@
 # ViralClipper AI
 
-Este projeto visa construir um sistema automatizado para identificar clipes de alto engajamento em vídeos longos do YouTube e publicá-los em plataformas de vídeos curtos.
+ViralClipper AI is a smart tool designed to help content creators find the most engaging and "viral-worthy" moments in their long-form videos and automatically turn them into clips for social media platforms like TikTok, Instagram Reels, and YouTube Shorts.
 
-# ViralClipper AI (MVP)
+## 🚀 Project Vision
 
-Este projeto visa construir um sistema automatizado para identificar clipes de alto engajamento em vídeos longos do YouTube e publicá-los em plataformas de vídeos curtos. Esta é a implementação do Produto Mínimo Viável (MVP).
+The goal is to create a fully automated "content repurposing" pipeline. A creator provides a long video, and ViralClipper AI analyzes audience engagement, identifies the best moments, reformats them into vertical clips, adds smart captions, and schedules them for posting, all with minimal human intervention. This allows creators to maximize their reach and grow their audience efficiently.
 
-## Visão Geral da Arquitetura (MVP)
+## ✨ Core Features (MVP)
 
-O sistema é uma aplicação web com:
-- **Frontend**: (Placeholder no MVP) Interação do usuário.
-- **Backend**: API Python (FastAPI) para gerenciar lógica de negócios, processamento de vídeo e interações com banco de dados.
-- **Banco de Dados**: PostgreSQL para armazenar dados de usuários, projetos, clipes e agendamentos.
-- **Fila de Tarefas**: Celery com RabbitMQ para processamento assíncrono de tarefas pesadas (download, análise, corte de vídeo, publicação).
-- **Processamento de Vídeo**: FFmpeg para cortar e reformatar clipes.
-- **Armazenamento de Mídia**: Arquivos de vídeo são armazenados localmente no volume Docker `media_data`.
+*   **YouTube Video Ingestion**: Start a new project by simply providing a YouTube video URL.
+*   **Automated Download**: The system automatically downloads the source video for processing.
+*   **Audience Retention Analysis**: Simulates analyzing YouTube's audience retention data to find where viewers are most engaged.
+*   **Peak Detection**: Automatically identifies "peaks" in retention, suggesting them as potential viral clips.
+*   **Clip Suggestion**: The suggested clips (timestamps) are saved and presented to the user for approval.
+*   **Asynchronous Processing**: Uses a robust task queue (Celery) to handle heavy tasks like downloading and video processing without blocking the user interface.
+*   **Manual Clip Approval**: Users can review the suggested clips and approve the ones they want to create.
+*   **Automated Clip Generation**: Approved clips are automatically cut and formatted using FFmpeg.
 
-## Tecnologias Principais (Backend MVP)
+## ⚙️ How It Works: The Workflow
 
-- Python 3.9+
-- FastAPI: Para a API REST.
-- SQLAlchemy: ORM para interagir com o PostgreSQL.
-- Pydantic: Para validação de dados e schemas da API.
-- Celery: Para tarefas assíncronas.
-- RabbitMQ: Message broker para Celery.
-- PostgreSQL: Banco de dados relacional.
-- FFmpeg: Para processamento de vídeo.
-- yt-dlp: Para download de vídeos do YouTube.
-- Docker & Docker Compose: Para containerização e orquestração do ambiente de desenvolvimento.
-- Pytest: Para testes unitários.
+The process begins when a user submits a YouTube URL. The backend then kicks off a series of asynchronous tasks to download, analyze, and process the video, suggesting the best clips for the user to approve.
 
-## Configuração e Execução do Ambiente de Desenvolvimento
+![Video Processing Workflow](docs/workflow.md)
 
-1.  **Clone o repositório.**
+## 🏗️ System Architecture
+
+The system is built on a modern, containerized architecture that separates concerns for scalability and maintainability. It includes a web-based frontend (placeholder), a FastAPI backend, a PostgreSQL database for data storage, and Celery workers for background processing.
+
+![System Architecture Diagram](docs/architecture.md)
+
+## 🛠️ Technologies
+
+*   **Backend**: Python, FastAPI
+*   **Database**: PostgreSQL
+*   **Task Queue**: Celery, RabbitMQ
+*   **Video Processing**: FFmpeg, yt-dlp
+*   **Containerization**: Docker, Docker Compose
+*   **Testing**: Pytest
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+*   Docker and Docker Compose installed on your machine.
+
+### Setup and Execution
+
+1.  **Clone the repository.**
     ```bash
     git clone <your-repo-url>
     cd viralclipper-ai
     ```
-2.  **Variáveis de Ambiente (Backend):**
-    *   No diretório `backend/`, copie `.env_example` para `backend/.env`.
+
+2.  **Set Up Environment Variables:**
+    *   In the `backend/` directory, copy the example environment file:
         ```bash
         cp backend/.env_example backend/.env
         ```
-    *   Revise `backend/.env` e ajuste as variáveis se necessário (as padrões devem funcionar para desenvolvimento local).
-    *   **Importante para OAuth do Google (Pós-MVP):** Preencha `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` com suas credenciais do Google Cloud Console quando for implementar a integração real.
+    *   The default values in `backend/.env` are suitable for local development.
 
-3.  **Execute com Docker Compose:**
-    A partir do diretório raiz `viralclipper-ai/`:
-    ```bash
-    docker-compose up --build -d # O -d executa em modo detached
-    ```
-4.  **Acessando os Serviços:**
-    *   Backend API: `http://localhost:8000`
-    *   Documentação Interativa da API (Swagger): `http://localhost:8000/docs`
-    *   Documentação Alternativa da API (ReDoc): `http://localhost:8000/redoc`
-    *   RabbitMQ Management UI: `http://localhost:15672` (usuário/senha padrão: guest/guest ou user/password se configurado no docker-compose)
-    *   PostgreSQL: Acessível na porta `5432` (para clientes como pgAdmin ou DBeaver).
+3.  **Launch the Application:**
+    *   From the root `viralclipper-ai/` directory, run:
+        ```bash
+        docker-compose up --build -d
+        ```
+    *   The `-d` flag runs the containers in detached mode.
 
-5.  **Para parar os serviços:**
+4.  **Accessing Services:**
+    *   **Backend API**: `http://localhost:8000`
+    *   **API Docs (Swagger UI)**: `http://localhost:8000/docs`
+    *   **RabbitMQ Management**: `http://localhost:15672` (Default user: `guest`, pass: `guest`)
+
+5.  **Stopping the Application:**
     ```bash
     docker-compose down
     ```
 
-## Executando os Testes (Backend)
+## 🧪 Running Tests
 
-Os testes unitários usam Pytest. Para executá-los:
-
-1.  Certifique-se de que os containers Docker estão em execução (especialmente o do backend).
-2.  Execute os testes dentro do container do backend:
+1.  Ensure the Docker containers are running (`docker-compose up -d`).
+2.  Execute the tests inside the backend container:
     ```bash
     docker-compose exec backend pytest app/tests/
     ```
-    Ou, para incluir cobertura (se configurado no pytest.ini):
-    ```bash
-    docker-compose exec backend pytest app/tests/ --cov=app
-    ```
 
-## Resumo dos Endpoints da API (MVP)
+## 🗺️ API Endpoints
 
-Consulte a documentação interativa da API (Swagger UI) em `http://localhost:8000/docs` para detalhes completos sobre os endpoints, schemas de request/response e para testá-los diretamente do navegador.
+For a detailed overview of all API endpoints, schemas, and to interact with the API directly, please visit the Swagger documentation at `http://localhost:8000/docs`.
 
-Principais grupos de endpoints:
-- `/api/v1/auth/`: Autenticação de usuários (registro, login, stubs OAuth).
-- `/api/v1/projects/`: Gerenciamento de projetos de vídeo.
-- `/api/v1/clips/`: Gerenciamento de clipes sugeridos (aprovação, rejeição).
-- `/api/v1/publications/`: Agendamento de publicações de clipes.
-- `/api/v1/media/`: Acesso a arquivos de mídia (vídeos originais e processados).
+## 🛣️ Roadmap (Post-MVP)
 
-## Próximos Passos (Pós-MVP)
-
-- Implementação completa do frontend.
-- Integração real com APIs do YouTube (Analytics e Data API para upload).
-- Integração com outras plataformas sociais (Instagram Reels, TikTok).
-- Algoritmo de detecção de picos mais avançado (Filtros C e D).
-- "Smart Crop" com detecção de objetos/rostos.
-- Legendas automáticas.
-- Loop de feedback com IA/ML para otimização.
-- Scheduler robusto para publicações (ex: Celery Beat).
-- Melhorias na segurança, escalabilidade e monitoramento para produção.
+*   **Full Frontend Implementation**: Build a user-friendly interface in React or Vue.
+*   **Real YouTube API Integration**: Connect to the real YouTube Analytics API to use actual retention data.
+*   **Multi-Platform Publishing**: Add integrations for TikTok, Instagram, and other platforms.
+*   **Smart Crop & Reframing**: Automatically detect faces or subjects to keep them in the frame for vertical formats.
+*   **Auto-Captioning**: Generate and burn subtitles into the video clips.
+*   **AI-Powered Feedback Loop**: Use performance data from published clips to improve future clip suggestions.

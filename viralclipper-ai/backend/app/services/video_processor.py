@@ -22,38 +22,35 @@ def process_clip(clip_id: int, db: Session) -> str:
     clip = db.query(models.SuggestedClip).filter(models.SuggestedClip.id == clip_id).first()
     if not clip:
         raise ValueError(f"SuggestedClip with id {clip_id} not found.")
-    if not clip.project:
-        raise ValueError(f"Project not found for clip id {clip_id}.")
-    if not clip.project.original_video_path or not Path(clip.project.original_video_path).exists():
-        raise ValueError(f"Original video for project {clip.project_id} not found at {clip.project.original_video_path}.")
-
-    original_video_path = Path(clip.project.original_video_path)
-    project_media_path = Path(settings.MEDIA_ROOT_PATH) / f"project_{clip.project_id}"
-    clips_dir = project_media_path / "clips"
-    clips_dir.mkdir(parents=True, exist_ok=True)
-
-    processed_clip_filename = f"clip_{clip.id}.mp4"
-    output_path = clips_dir / processed_clip_filename
-
-    start_time = clip.timestamp_inicio_segundos
-    end_time = clip.timestamp_fim_segundos
-    duration = end_time - start_time
-
-    if duration <= 0:
-        raise ValueError("Clip duration must be positive.")
 
     try:
         clip.processing_status = "processing"
         db.commit()
 
+        if not clip.project:
+            raise ValueError(f"Project not found for clip id {clip_id}.")
+        if not clip.project.original_video_path or not Path(clip.project.original_video_path).exists():
+            raise ValueError(f"Original video for project {clip.project_id} not found at {clip.project.original_video_path}.")
+
+        original_video_path = Path(clip.project.original_video_path)
+        project_media_path = Path(settings.MEDIA_ROOT_PATH) / f"project_{clip.project_id}"
+        clips_dir = project_media_path / "clips"
+        clips_dir.mkdir(parents=True, exist_ok=True)
+
+        processed_clip_filename = f"clip_{clip.id}.mp4"
+        output_path = clips_dir / processed_clip_filename
+
+        start_time = clip.timestamp_inicio_segundos
+        end_time = clip.timestamp_fim_segundos
+        duration = end_time - start_time
+
+        if duration <= 0:
+            raise ValueError("Clip duration must be positive.")
+
         # FFmpeg command for cutting and reformatting to 9:16 (center crop)
-        # Target output resolution (e.g., 720x1280 or 1080x1920 for Shorts/Reels)
         target_w = 720
         target_h = 1280
-
-        # This filter scales width to target_w, then crops a target_h segment from the center height.
         vf_opts = f"scale={target_w}:-2,crop={target_w}:{target_h}:(iw-{target_w})/2:(ih-{target_h})/2"
-
 
         ffmpeg_command = [
             'ffmpeg',
@@ -61,9 +58,9 @@ def process_clip(clip_id: int, db: Session) -> str:
             '-i', str(original_video_path),
             '-t', str(duration),
             '-vf', vf_opts,
-            '-c:a', 'aac', # Audio codec
-            '-strict', '-2', # For experimental aac
-            '-y', # Overwrite output file if it exists
+            '-c:a', 'aac',
+            '-strict', '-2',
+            '-y',
             str(output_path)
         ]
 

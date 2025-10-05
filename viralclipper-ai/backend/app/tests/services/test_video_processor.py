@@ -14,7 +14,7 @@ def mock_db_session():
 @pytest.fixture
 def mock_settings_fixture(tmp_path): # tmp_path é uma fixture do pytest para criar dirs temporários
     media_root = tmp_path / "media"
-    media_root.mkdir()
+    media_root.mkdir(exist_ok=True)
     settings_mock = MagicMock()
     settings_mock.MEDIA_ROOT_PATH = str(media_root)
     return settings_mock
