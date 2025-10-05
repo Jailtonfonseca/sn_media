@@ -152,11 +152,15 @@ def analyze_retention_task(self, download_result: dict):
         detected_peaks_timestamps = analyzer.detect_retention_peaks(retention_data)
         print(f"Project {project_id} - Detected retention peaks (timestamps): {detected_peaks_timestamps}")
 
-        # Deletar clipes sugeridos antigos, se houver, para esta nova análise
-        db.query(models.SuggestedClip).filter(models.SuggestedClip.project_id == project_id).delete()
+        # Delete only old clips that are still pending approval.
+        # This preserves clips that have been approved or rejected by the user.
+        db.query(models.SuggestedClip).filter(
+            models.SuggestedClip.project_id == project_id,
+            models.SuggestedClip.status_aprovacao == 'pending_approval'
+        ).delete(synchronize_session=False)
         db.commit()
 
-        # Criar novas instâncias de SuggestedClip
+        # Create new instances of SuggestedClip
         for start_time, end_time in detected_peaks_timestamps:
             # Aplicar filtros básicos de duração do clipe aqui (Ex: Passo C do briefing)
             clip_duration = end_time - start_time

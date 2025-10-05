@@ -22,6 +22,17 @@ def create_project(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    # Check for existing project with the same URL for this user
+    existing_project = db.query(models.Project).filter(
+        models.Project.youtube_url == str(project_in.youtube_url),
+        models.Project.owner_id == user.id
+    ).first()
+    if existing_project:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A project with this YouTube URL already exists."
+        )
+
     db_project = models.Project(
         youtube_url=str(project_in.youtube_url),
         title_base=project_in.title_base,

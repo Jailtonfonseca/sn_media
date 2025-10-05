@@ -40,6 +40,14 @@ def process_clip(clip_id: int, db: Session) -> str:
         processed_clip_filename = f"clip_{clip.id}.mp4"
         output_path = clips_dir / processed_clip_filename
 
+        # If the processed file already exists, skip the expensive processing step.
+        if output_path.exists():
+            print(f"Clip {clip_id} output file already exists. Skipping processing.")
+            clip.processed_clip_path = str(output_path)
+            clip.processing_status = "processed"
+            db.commit()
+            return str(output_path)
+
         start_time = clip.timestamp_inicio_segundos
         end_time = clip.timestamp_fim_segundos
         duration = end_time - start_time
