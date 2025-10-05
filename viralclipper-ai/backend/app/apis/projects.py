@@ -4,7 +4,8 @@ from typing import List # Adicionar List
 from app.db import models, database
 from app.schemas import projects as project_schemas
 from app.core import security
-from app.workers.tasks import download_youtube_video_task
+from celery import chain
+from app.workers.tasks import download_youtube_video_task, analyze_retention_task
 
 router = APIRouter()
 
@@ -21,6 +22,17 @@ def create_project(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    # Check for existing project with the same URL for this user
+    existing_project = db.query(models.Project).filter(
+        models.Project.youtube_url == str(project_in.youtube_url),
+        models.Project.owner_id == user.id
+    ).first()
+    if existing_project:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A project with this YouTube URL already exists."
+        )
+
     db_project = models.Project(
         youtube_url=str(project_in.youtube_url),
         title_base=project_in.title_base,
@@ -32,7 +44,14 @@ def create_project(
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
-    download_youtube_video_task.delay(db_project.id, str(db_project.youtube_url))
+
+    # Create a Celery chain to ensure tasks run sequentially
+    processing_chain = chain(
+        download_youtube_video_task.s(db_project.id, str(db_project.youtube_url)),
+        analyze_retention_task.s()
+    )
+    processing_chain.apply_async()
+
     return db_project
 
 # NOVO: GET /api/v1/projects/ - Listar todos os projetos do usuário

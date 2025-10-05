@@ -27,12 +27,15 @@ def download_youtube_video_task(self, project_id: int, youtube_url: str):
     db = SessionLocal()
     try:
         print(f"Starting download for project {project_id}, URL: {youtube_url}")
-        downloaded_path, duration_seconds = download_video(youtube_url, project_id, db) # Capturar duração
+        downloaded_path, duration_seconds = download_video(youtube_url, project_id, db)
         print(f"Video for project {project_id} downloaded to: {downloaded_path}, Duration: {duration_seconds}s")
 
-        analyze_retention_task.delay(project_id, youtube_url, duration_seconds) # Passar duração
-
-        return {"project_id": project_id, "status": "download_complete", "path": downloaded_path, "duration": duration_seconds}
+        # Return data for the next task in the chain
+        return {
+            "project_id": project_id,
+            "youtube_url": youtube_url,
+            "duration_seconds": duration_seconds
+        }
     except Exception as e:
         print(f"Download failed for project {project_id}: {e}")
         # self.retry(exc=e, countdown=60) # Example of retry
@@ -72,24 +75,15 @@ def process_video_clip_task(self, clip_id: int):
         print(f"Clip {clip_id} processed successfully. Output: {processed_path}")
         return {"clip_id": clip_id, "status": "processing_complete", "path": processed_path}
     except Exception as e:
-        print(f"Video processing failed for clip {clip_id}: {e}")
-        # O erro já é tratado e status atualizado em process_clip, mas podemos logar aqui também
-        # self.retry(exc=e, countdown=300) # Retry com delay maior
-        # Não precisa atualizar o status aqui pois process_clip já o faz
-        # A sessão do DB é gerenciada dentro de process_clip em caso de erro lá.
-        # Se o erro for antes de chamar process_clip ou um erro inesperado aqui:
-        if db.is_active:
-             clip_to_update = db.query(models.SuggestedClip).filter(models.SuggestedClip.id == clip_id).first()
-             if clip_to_update and clip_to_update.processing_status != "processing_failed":
-                  clip_to_update.processing_status = "task_level_processing_failed"
-                  clip_to_update.processing_error_detail = str(e)
-                  db.commit()
-        raise # Re-raise para Celery marcar como falha
+        # The underlying process_clip service is responsible for setting the 'processing_failed' status in the DB.
+        # This task's responsibility is to log the failure and re-raise the exception so Celery marks it as FAILED.
+        print(f"Video processing task failed for clip {clip_id}: {e}")
+        raise # Re-raise to ensure Celery marks the task as FAILED.
     finally:
         if db.is_active:
             db.close()
 
-@celery_app.task(name="app.workers.tasks.publish_scheduled_video_task", bind=True, max_retries=1) # Menos retries para APIs externas
+@celery_app.task(name="app.workers.tasks.publish_scheduled_video_task", bind=True, max_retries=1)
 def publish_scheduled_video_task(self, publication_id: int):
     db = SessionLocal()
     try:
@@ -99,32 +93,21 @@ def publish_scheduled_video_task(self, publication_id: int):
 
         if success:
             print(f"Publication {publication_id} processed successfully by task.")
-            return {"publication_id": publication_id, "status": "published_successfully_or_simulated"}
+            return {"publication_id": publication_id, "status": "published"}
         else:
-            # Erro já foi logado e status atualizado pelo service
-            print(f"Publication {publication_id} failed or simulated failure by task.")
-            # Não precisa re-raise se o service já trata o erro e status.
-            # Mas para Celery marcar como falha, um erro precisa ser levantado.
-            # Vamos assumir que o service atualiza o status, e a task só reporta.
-            # Para que o Celery marque como falha, o service deve levantar exceção em caso de falha.
-            # Por enquanto, o service.publish_short_to_youtube retorna bool.
-            # Se queremos que o Celery mostre como falha, o service deve levantar exceção,
-            # ou a task deve levantar uma com base no 'success'.
+            # The service handles updating the DB status to 'failed'.
+            # We raise an exception to ensure the Celery task is marked as FAILED for monitoring.
             publication = db.query(models.ScheduledPublication).filter(models.ScheduledPublication.id == publication_id).first()
-            if publication and publication.status_publicacao == "failed":
-                 raise Exception(f"Publication failed: {publication.publication_error or 'Unknown error'}")
-            return {"publication_id": publication_id, "status": "publication_attempted_check_db_for_status"}
+            error_message = f"Publication {publication_id} failed as indicated by the publishing service."
+            if publication and publication.publication_error:
+                error_message += f" Reason: {publication.publication_error}"
+            raise Exception(error_message)
 
     except Exception as e:
-        # Se o service levantar uma exceção não tratada por ele, ou se a task levantar uma.
-        print(f"Unhandled error in publish_scheduled_video_task for publication {publication_id}: {e}")
-        # Tentar atualizar o status se possível, mas pode já estar feito ou a sessão pode estar ruim.
-        # publication = db.query(models.ScheduledPublication).filter(models.ScheduledPublication.id == publication_id).first()
-        # if publication and publication.status_publicacao not in ["failed", "published"]:
-        #    publication.status_publicacao = "failed"
-        #    publication.publication_error = f"Task level error: {str(e)}"
-        #    db.commit()
-        raise # Re-raise para Celery
+        # The service or the logic above should handle DB state.
+        # We just log and re-raise to ensure Celery marks the task as failed.
+        print(f"Error in publish_scheduled_video_task for publication {publication_id}: {e}")
+        raise
     finally:
         db.close()
 
@@ -145,7 +128,11 @@ def publish_scheduled_video_task(self, publication_id: int):
 #     return {"due_publications_found": len(due_publications)}
 
 @celery_app.task(name="app.workers.tasks.analyze_retention_task", bind=True, max_retries=3)
-def analyze_retention_task(self, project_id: int, video_youtube_id_or_url: str, video_duration_seconds: Optional[int]): # Adicionar duração
+def analyze_retention_task(self, download_result: dict):
+    project_id = download_result["project_id"]
+    youtube_url = download_result["youtube_url"]
+    duration_seconds = download_result["duration_seconds"]
+
     db = SessionLocal()
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project:
@@ -156,10 +143,8 @@ def analyze_retention_task(self, project_id: int, video_youtube_id_or_url: str, 
         project.status = "processing_retention"
         db.commit()
 
-        analyzer = YouTubeAnalyzerService(video_id=video_youtube_id_or_url, project_id=project_id)
-        # Usar a duração real se disponível para mock_data, caso contrário, o mock interno decide
-        effective_duration = video_duration_seconds if video_duration_seconds else 600
-        retention_data = analyzer.get_audience_retention_data() # Mock não usa a duração passada diretamente, mas poderia ser ajustado
+        analyzer = YouTubeAnalyzerService(video_id=youtube_url, project_id=project_id)
+        retention_data = analyzer.get_audience_retention_data()
 
         serializable_retention_data = [list(item) for item in retention_data]
         project.retention_data_json = json.loads(json.dumps(serializable_retention_data))
@@ -167,11 +152,15 @@ def analyze_retention_task(self, project_id: int, video_youtube_id_or_url: str, 
         detected_peaks_timestamps = analyzer.detect_retention_peaks(retention_data)
         print(f"Project {project_id} - Detected retention peaks (timestamps): {detected_peaks_timestamps}")
 
-        # Deletar clipes sugeridos antigos, se houver, para esta nova análise
-        db.query(models.SuggestedClip).filter(models.SuggestedClip.project_id == project_id).delete()
+        # Delete only old clips that are still pending approval.
+        # This preserves clips that have been approved or rejected by the user.
+        db.query(models.SuggestedClip).filter(
+            models.SuggestedClip.project_id == project_id,
+            models.SuggestedClip.status_aprovacao == 'pending_approval'
+        ).delete(synchronize_session=False)
         db.commit()
 
-        # Criar novas instâncias de SuggestedClip
+        # Create new instances of SuggestedClip
         for start_time, end_time in detected_peaks_timestamps:
             # Aplicar filtros básicos de duração do clipe aqui (Ex: Passo C do briefing)
             clip_duration = end_time - start_time
